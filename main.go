@@ -3,39 +3,30 @@ package main
 import (
 	"fmt"
 	"github.com/ananrafs1/go-palugada/worker"
-	"sync"
+	// "sync"
 	"time"
 	"math/rand"
 )
 
 
 func main() {
-	var sg sync.WaitGroup
-	for i:= 0; i < 100; i++ {
-		sg.Add(1)
-		go func(i int) {
-			defer sg.Done()
-			outch, _ := (&worker.Workers{}).TugasBersama(5, &printer{})
-			for output := range outch {
-				print(fmt.Sprintf("%s %d", output.(string), i))
-			}
-		}(i)
+	
+	Tasks := []worker.Itask{ printer{}, printer{}, printer{}, printer{} }
+	Workers := worker.Worker{
+			Task : Tasks,
+		}
+	Workers.Do()
+	ret, _ := Workers.Listen()
+	for ls := range ret {
+		fmt.Println(ls.(string))
 	}
-	sg.Wait()
-
-	Workers := make(Workers,0)
 }
 
 
 type printer struct{}
-func (p *printer) Task(successOutput chan interface{}, errorOutpur chan error, close func()){
-	defer close()
+func (p printer) Task() (interface{},  error) {
 	rand.Seed(time.Now().UnixNano())
-	n := 2 + rand.Intn(5-2)
+	n := 2 + rand.Intn(50-2)
 	time.Sleep(time.Duration(n)* time.Second)
-	successOutput <- "TUGAS DISELESAIKAN "
-}
-
-func print(words string){
-	fmt.Println(words)
+	return "TUGAS DISELESAIKAN ", nil
 }

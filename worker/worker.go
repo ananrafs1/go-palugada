@@ -2,60 +2,46 @@ package worker
 
 import(
 	"sync"
-	"context"
-	"fmt"
+	// "context"
+	// "fmt"
 )
 type Itask interface {
-	Task(successOutput chan interface{}, errorOutpur chan error, close func())
+	Task() (ret interface{}, err error)
 }
 
 type Worker struct {
-	Task Itask
-	OutputChan chan interface{}
-	ErrorChan chan error
+	Task []Itask
+	outputChan chan interface{}
+	errorChan chan error
 }
 
 
-
-func (w Worker) DefineWorker(n int) []Worker{
-	wout := make([]Worker,0)
-	for {
-		if n < 1 {
-			break
-		}
-		wout = append(wout, Worker{})
-		n--
+func (w *Worker) Do() {
+	if len(w.Task) < 1 {
+		return
 	}
-	return wout
-}
-
-func (w *Worker) TugasBersama(n int, task Itask) ( chan interface{},  chan error) {
-	outch := make(chan interface{}, n)
-	errch := make(chan error, n)
-	ws := w.DefineWorker(n)
-	var syncG sync.WaitGroup
-	for range ws {
-		syncG.Add(1)
-		go task.Task(outch, errch, func() { syncG.Done() })
+	w.outputChan = make(chan interface{}, len(w.Task))
+	w.errorChan = make(chan error, len(w.Task))
+	var wg sync.WaitGroup
+	for _,t := range w.Task {
+		wg.Add(1)
+		go func(){
+			defer wg.Done()
+			ret, err := t.Task()
+			if err != nil {
+				w.errorChan <- err
+				return
+			}
+			w.outputChan <- ret
+			return
+		}()
 	}
-	syncG.Wait()
-	close(outch)
-	close(errch)
-	return outch, errch
+	wg.Wait()
+	close(w.outputChan)
+	close(w.errorChan)
 }
 
-func (w *Worker) Do (ctx context.Context, close func())  {
-	go w.Task.Task(w.OutputChan, w.ErrorChan, close)
-}
 
-type Workers []Worker
-
-func (w *Workers) DoAsync (ctx context.Context) {
-	// var syncG sync.WaitGroup
-	for ws := range *w {
-		fmt.Println(ws)
-		// syncG.Add(1)
-		// (&ws).Do(ctx, func() {syncG.Done()})
-	}
-	// syncG.Wait()
+func (w *Worker) Listen() (<-chan interface{}, <-chan error) {
+	return w.outputChan, w.errorChan
 }
