@@ -23,10 +23,12 @@ func main() {
 }
 
 
-type printer struct{}
+type printer struct{
+	worker.Itask
+}
 func (p printer) Task() (interface{},  error) {
 	rand.Seed(time.Now().UnixNano())
-	n := 2 + rand.Intn(50-2)
+	n := 2 + rand.Intn(5-2)
 	time.Sleep(time.Duration(n)* time.Second)
 	return "TUGAS DISELESAIKAN ", nil
 }

@@ -13,10 +13,6 @@ var(
 
 func Test_Retry_Success(t *testing.T) {
 	testFunction := func() (interface{}, error) {
-		// testStub++
-		// if testStub > 5 {
-		// 	return nil, errors.New("out of range")
-		// }
 		return 1, nil
 	}
 	r := Retry(testFunction, 5, time.Duration(5*time.Second))

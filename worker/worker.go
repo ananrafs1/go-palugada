@@ -7,6 +7,7 @@ import(
 )
 type Itask interface {
 	Task() (ret interface{}, err error)
+	Write() (ret interface{}, err error)
 }
 
 type Worker struct {
@@ -33,7 +34,6 @@ func (w *Worker) Do() {
 				return
 			}
 			w.outputChan <- ret
-			return
 		}()
 	}
 	wg.Wait()
