@@ -24,13 +24,17 @@ func Test_RecurseTry_ShouldSucces(t *testing.T){
 	}
 	stbs := make([]stub, 0)
 	Klausa := func(st *interface{}) error {
-		stbs = append(stbs, (*((*st).(*[]stub)))[0])
-		fmt.Println((*((*st).(*[]stub))))
-		(*((*st).(*[]stub))) = (*((*st).(*[]stub)))[1:]
+		stubPointer := (*st).(*[]stub) //grab pointer
+		fmt.Println(*stubPointer) //dereference to get value
+		stbs = append(stbs, (*stubPointer)[0]) 
+		(*stubPointer) = (*stubPointer)[1:]
 		return nil
 	}
-	wrap := RecurseTry(Klausa, func(subs *interface{}) bool { return len((*(*subs).(*[]stub))) < 1 }, 3, time.Duration(2*time.Second))
-	var pr *interface{} = new(interface{})
+	wrap := RecurseTry(Klausa, func(subs *interface{}) bool { 
+		stubPointer := (*subs).(*[]stub)
+		return len((*stubPointer)) < 1 
+		}, 3, time.Duration(2*time.Second))
+	pr := new(interface{})
 	*pr = &stubs
 	_ = wrap(pr)
 	if len(stubs) > 0 {

@@ -2,13 +2,12 @@ package retry
 
 import (
 	"time"
-	"fmt"
 )
-type WatcherObject interface{}
 
 type Klausas func(*interface{}) error
 
 func RecurseTry(Klausul Klausas, LoopingControl func(*interface{}) bool, retryCount int, delay time.Duration) Klausas {
+	filler := retryCount
 	return func(w *interface{}) error {
 		for {
 			if LoopingControl(w) {
@@ -17,6 +16,7 @@ func RecurseTry(Klausul Klausas, LoopingControl func(*interface{}) bool, retryCo
 	
 			err := Klausul(w)
 			if err == nil && retryCount > 0 {
+				retryCount = filler //fill the retry because current process is success
 				continue
 			}
 			retryCount--
